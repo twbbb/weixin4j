@@ -1,12 +1,16 @@
 package com.foxinmy.weixin4j.mp.api;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.NameFilter;
 import com.foxinmy.weixin4j.exception.WeixinException;
 import com.foxinmy.weixin4j.http.weixin.ApiResult;
+import com.foxinmy.weixin4j.http.weixin.WeixinRequestExecutor;
 import com.foxinmy.weixin4j.http.weixin.WeixinResponse;
 import com.foxinmy.weixin4j.model.Token;
 import com.foxinmy.weixin4j.mp.message.TemplateMessage;
@@ -27,10 +31,41 @@ import com.foxinmy.weixin4j.util.NameValue;
 public class TmplApi extends MpApi {
 
 	private final TokenManager tokenManager;
-
-	public TmplApi(TokenManager tokenManager) {
+	private List<WeixinRequestExecutor> weixinExecutorList = new ArrayList(); 
+	private int index = 0; 
+	public TmplApi(TokenManager tokenManager) {		
 		this.tokenManager = tokenManager;
+		String template_executor_number =  weixinBundle().getString("template_executor_number");
+		int num = 1;
+		if (template_executor_number != null)
+		{
+			Matcher m = null;
+			Pattern p = Pattern.compile("^[0-9]+$");
+			m = p.matcher(template_executor_number);
+			if(m.matches())
+			{
+				num = Integer.parseInt(template_executor_number);
+			}
+		}		
+		
+		weixinExecutorList.add(weixinExecutor);
+		for(int i=1;i<num;i++)
+		{
+			weixinExecutorList.add(new WeixinRequestExecutor());
+		}		
 	}
+		
+	public synchronized WeixinRequestExecutor getWeixinRequestExecutor()
+	{
+		index++;
+		if(index >= weixinExecutorList.size())
+		{
+			index = 0;
+		}
+		return weixinExecutorList.get(index);
+	}
+
+	
 
 	/**
 	 * 设置所属行业(每月可修改行业1次，账号仅可使用所属行业中相关的模板)
@@ -161,7 +196,7 @@ public class TmplApi extends MpApi {
 			throws WeixinException {
 		Token token = tokenManager.getCache();
 		String template_send_uri = getRequestUri("template_send_uri");
-		WeixinResponse response = weixinExecutor.post(
+		WeixinResponse response = getWeixinRequestExecutor().post(
 				String.format(template_send_uri, token.getAccessToken()),
 				JSON.toJSONString(tplMessage, new NameFilter() {
 					@Override
