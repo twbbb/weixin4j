@@ -1,5 +1,7 @@
 package com.foxinmy.weixin4j.api;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,11 +21,38 @@ import com.foxinmy.weixin4j.http.weixin.WeixinRequestExecutor;
 public abstract class BaseApi {
 
 	protected final WeixinRequestExecutor weixinExecutor;
+	protected List<WeixinRequestExecutor> weixinExecutorList = new ArrayList(); 
 
 	private final  Pattern uriPattern = Pattern.compile("(\\{[^\\}]*\\})");
 
 	public BaseApi() {
 		this.weixinExecutor = new WeixinRequestExecutor();
+		String template_executor_number =  weixinBundle().getString("template_executor_number");
+		int num = 10;
+		if (template_executor_number != null)
+		{
+			Matcher m = null;
+			Pattern p = Pattern.compile("^[0-9]+$");
+			m = p.matcher(template_executor_number);
+			if(m.matches())
+			{
+				num = Integer.parseInt(template_executor_number);
+			}
+		}		
+		for(int i=0;i<num;i++)
+		{
+			weixinExecutorList.add(new WeixinRequestExecutor());
+		}
+	}
+	private volatile int weixinExecutorIndex = 0; 
+	public synchronized WeixinRequestExecutor getWeixinRequestExecutor()
+	{
+		weixinExecutorIndex++;
+		if(weixinExecutorIndex >= weixinExecutorList.size())
+		{
+			weixinExecutorIndex = 0;
+		}
+		return weixinExecutorList.get(weixinExecutorIndex);
 	}
 
 	protected abstract ResourceBundle weixinBundle();

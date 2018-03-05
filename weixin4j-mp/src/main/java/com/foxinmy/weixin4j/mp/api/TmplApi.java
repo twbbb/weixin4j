@@ -31,40 +31,12 @@ import com.foxinmy.weixin4j.util.NameValue;
 public class TmplApi extends MpApi {
 
 	private final TokenManager tokenManager;
-	private List<WeixinRequestExecutor> weixinExecutorList = new ArrayList(); 
-	private int index = 0; 
+	
+	
 	public TmplApi(TokenManager tokenManager) {		
 		this.tokenManager = tokenManager;
-		String template_executor_number =  weixinBundle().getString("template_executor_number");
-		int num = 1;
-		if (template_executor_number != null)
-		{
-			Matcher m = null;
-			Pattern p = Pattern.compile("^[0-9]+$");
-			m = p.matcher(template_executor_number);
-			if(m.matches())
-			{
-				num = Integer.parseInt(template_executor_number);
-			}
-		}		
-		
-		weixinExecutorList.add(weixinExecutor);
-		for(int i=1;i<num;i++)
-		{
-			weixinExecutorList.add(new WeixinRequestExecutor());
-		}		
+				
 	}
-		
-	public synchronized WeixinRequestExecutor getWeixinRequestExecutor()
-	{
-		index++;
-		if(index >= weixinExecutorList.size())
-		{
-			index = 0;
-		}
-		return weixinExecutorList.get(index);
-	}
-
 	
 
 	/**
